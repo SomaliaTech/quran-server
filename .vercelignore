@@ -1,0 +1,8 @@
+node_modules
+.git
+README.md
+dist
+.env
+.env.local
+.env.development
+.env.production

@@ -1,0 +1,170 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+ url= env("DATABASE_URL")
+
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+model User {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String         @unique
+  password      String?
+  phoneNumber   Float?
+  avatar        Json?
+  pushToken     String?
+  role          Role           @default(USER)
+  verified      Boolean        @default(false)
+  country       String?        @default("Uganda")
+  city          String?        @default("Kampala")
+  post          Post[]
+  // Relations
+  reviews       Review[]
+  reviewReplies ReviewReply[]
+  tickets       Ticket[]
+  ticketReplies TicketReply[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contenct {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+phone String
+email String
+postId String @db.ObjectId @unique
+post Post @relation(fields: [postId], references: [id])
+}
+model Locaiton{
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    name String
+    address String
+    coordinates Json?
+    postId String @db.ObjectId @unique
+post Post @relation(fields: [postId], references: [id])
+
+}
+model Post {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  categories  String[]
+  contect Contenct?
+  isMissing   Boolean  @default(true)
+  thumbnail   Json
+  tags        String[]
+  status String
+  location    Locaiton?
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  // Relations
+  reviews     Review[]
+  tickets     Ticket[]
+
+  // Optional fields for purchases
+  iosProductId     String?
+  androidProductId String?
+  visibility       Boolean? @default(true)
+  ratings          Float    @default(0)
+  purchased        Float    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id      String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String        @db.ObjectId
+  user    User          @relation(fields: [userId], references: [id])
+  postId  String        @db.ObjectId
+  post    Post          @relation(fields: [postId], references: [id])
+  rating  Float         @default(0)
+  comment String
+  replies ReviewReply[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReviewReply {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  reviewId String @db.ObjectId
+  review   Review @relation(fields: [reviewId], references: [id])
+  userId   String @db.ObjectId
+  user     User   @relation(fields: [userId], references: [id])
+  reply    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ticket {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  creatorId String @db.ObjectId
+  user      User   @relation(fields: [creatorId], references: [id])
+  postId    String @db.ObjectId
+  post      Post   @relation(fields: [postId], references: [id])
+  title     String
+  details   String
+  status    String @default("PENDING")
+
+  // Relations
+  replies       TicketReply[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TicketReply {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  ticketId String @db.ObjectId
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  userId   String @db.ObjectId
+  user     User   @relation(fields: [userId], references: [id])
+  reply    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  message     String
+  status      String  @default("UNREAD")
+  creatorId   String  @db.ObjectId
+  receiverId  String? @db.ObjectId
+  redirectUrl String?
+
+  // Optional relations
+  questionId String? @db.ObjectId
+  ticketId   String? @db.ObjectId
+  ticket     Ticket? @relation(fields: [ticketId], references: [id])
+  user       User    @relation(fields: [creatorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model PrayerTime {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  fajr        String
+  dhuhr       String
+  asr         String
+  maghrib     String
+  isha        String
+  // We remove the unique 'date' field and use a 'type' or 'isActive'
+  isActive    Boolean  @default(true) 
+  updatedAt   DateTime @updatedAt
+}
